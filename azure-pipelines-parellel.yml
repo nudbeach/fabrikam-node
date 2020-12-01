@@ -1,0 +1,86 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: BuildStage
+  jobs: 
+  - job: NodeInstall
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '10.x'
+      displayName: 'Install Node.js'
+    - script: |
+        npm install
+        npm run build --if-present
+        #npm run test --if-present
+      displayName: 'npm install, build and test'
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        replaceExistingArchive: true
+    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+      artifact: drop
+- stage: DeployStage
+  jobs:
+  - deployment: VMDeploy
+    displayName: web
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    environment:
+      name: 'build003'
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo my first deployment 
+- stage: DeployStage
+  jobs: 
+  - deployment: VMDeploy
+    displayName: web
+    environment:
+      name: 'build003'
+      resourceType: VirtualMachine
+    strategy:
+        rolling:
+          maxParallel: 2  #for percentages, mention as x%
+          preDeploy:
+            steps:
+            - download: current
+              artifact: drop
+            - script: echo initialize, cleanup, backup, install certs
+          deploy:
+            steps:
+            - task: Bash@3
+              inputs:
+                targetType: 'inline'
+                script: |
+                  # Modify deployment script based on the app type
+                  echo "Starting deployment script run"
+                  sudo java -jar '$(Pipeline.Workspace)/drop/**/target/*.jar'
+          routeTraffic:
+            steps:
+            - script: echo routing traffic
+          postRouteTraffic:
+            steps:
+            - script: echo health check post-route traffic
+          on:
+            failure:
+              steps:
+              - script: echo Restore from backup! This is on failure
+            success:
+              steps:
+              - script: echo Notify! This is on success
