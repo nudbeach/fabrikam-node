@@ -34,7 +34,6 @@ steps:
 - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
   artifact: drop
 
-jobs:
 - deployment: VMDeploy
   displayName: web
   pool:
