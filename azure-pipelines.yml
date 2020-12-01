@@ -19,7 +19,7 @@ steps:
 - script: |
     npm install
     npm run build --if-present
-    npm run test --if-present
+    #npm run test --if-present
   displayName: 'npm install, build and test'
 - task: ArchiveFiles@2
   displayName: 'Archive files'
@@ -32,16 +32,16 @@ steps:
 - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
   artifact: drop
 
-- task:
-  - deployment: VMDeploy
-    displayName: web
-    pool:
-      vmImage: 'Ubuntu-16.04'
-    environment:
-      name: 'build003'
-      resourceType: VirtualMachine
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - script: echo my first deployment
+jobs:
+- deployment: VMDeploy
+  displayName: web
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  environment:
+    name: <environment name>
+    resourceType: VirtualMachine
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - script: echo my first deployment
