@@ -10,9 +10,9 @@ pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-- stage: A
+- stage: Build Stage
   jobs: 
-  - job: A
+  - job: Node Install
     steps:
     - task: NodeTool@0
       inputs:
@@ -33,7 +33,7 @@ stages:
         replaceExistingArchive: true
     - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       artifact: drop
-- stage: B
+- stage: Deploy Stage
   jobs: 
   - deployment: VMDeploy
     displayName: web
